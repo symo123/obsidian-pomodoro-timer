@@ -57,6 +57,12 @@ const updateBreakLen = (e: Event) => {
             </div>
         </div>
         <div class="pomodoro-settings-item">
+            <div class="pomodoro-settings-label">Continue After Zero</div>
+            <div class="pomodoro-settings-control">
+                <input type="checkbox" bind:checked={$settings.continueAfterZero} />
+            </div>
+        </div>
+        <div class="pomodoro-settings-item">
             <div class="pomodoro-settings-label">Notification Sound</div>
             <div class="pomodoro-settings-control">
                 <input

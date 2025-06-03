@@ -41,6 +41,7 @@ const DEFAULT_TASK: TaskItem = {
 
 export type TimerState = {
     autostart: boolean
+    continueAfterZero: boolean
     running: boolean
     // lastTick: number
     mode: Mode
@@ -83,6 +84,7 @@ export default class Timer implements Readable<TimerStore> {
         let count = this.toMillis(plugin.getSettings().workLen)
         this.state = {
             autostart: plugin.getSettings().autostart,
+            continueAfterZero: plugin.getSettings().continueAfterZero,
             workLen: plugin.getSettings().workLen,
             breakLen: plugin.getSettings().breakLen,
             running: false,
@@ -102,7 +104,7 @@ export default class Timer implements Readable<TimerStore> {
         this.store = derived(store, ($state) => ({
             ...$state,
             remained: this.remain($state.count, $state.elapsed),
-            finished: $state.count == $state.elapsed,
+            finished: $state.count <= $state.elapsed,
         }))
 
         this.subscribe = this.store.subscribe
@@ -118,14 +120,15 @@ export default class Timer implements Readable<TimerStore> {
     }
 
     private remain(count: number, elapsed: number): TimerRemained {
-        let remained = count - elapsed
+        let remained = Math.abs(count - elapsed)
         let min = Math.floor(remained / 60000)
         let sec = Math.floor((remained % 60000) / 1000)
         let minStr = min < 10 ? `0${min}` : min.toString()
         let secStr = sec < 10 ? `0${sec}` : sec.toString()
+        let sign = elapsed > count ? '-' : ''
         return {
             millis: remained,
-            human: `${minStr} : ${secStr}`,
+            human: `${sign}${minStr} : ${secStr}`,
         }
     }
 
@@ -134,15 +137,19 @@ export default class Timer implements Readable<TimerStore> {
     }
 
     private tick(t: number) {
+        // True iff this tick() is the one that completed the timer.
         let timeup: boolean = false
         let pause: boolean = false
         this.update((s) => {
             if (s.running) {
+                const timeWasUp = s.elapsed >= s.count
                 s.elapsed += t
-                if (s.elapsed >= s.count) {
+                if (s.elapsed >= s.count && !s.continueAfterZero) {
+                    // Only allow the timer to go negative if the user
+                    // requested that as a feature.
                     s.elapsed = s.count
                 }
-                timeup = s.elapsed >= s.count
+                timeup = !timeWasUp && s.elapsed >= s.count
             } else {
                 pause = true
             }
@@ -156,10 +163,17 @@ export default class Timer implements Readable<TimerStore> {
     private timeup() {
         let autostart = false
         this.update((state) => {
-            const ctx = this.createLogContext(state)
-            this.processLog(ctx)
-            autostart = state.autostart
-            return this.endSession(state)
+            this.notify(state)
+            if (!s.continueAfterZero) {
+              const ctx = this.createLogContext(state)
+              this.processLog(ctx)
+              autostart = state.autostart
+              return this.endSession(state)
+            } else {
+              // Otherwise our session will get ended by the user via a reset()
+              // when they're done.
+              return state
+            }
         })
         if (autostart) {
             this.start()
@@ -184,8 +198,7 @@ export default class Timer implements Readable<TimerStore> {
         if (ctx.mode == 'WORK') {
             await this.plugin.tracker?.updateActual()
         }
-        const logFile = await this.logger.log(ctx)
-        this.notify(ctx, logFile)
+        await this.logger.log(ctx)
     }
 
     public start() {
@@ -228,7 +241,9 @@ export default class Timer implements Readable<TimerStore> {
         return state
     }
 
-    private notify(state: TimerState, logFile: TFile | void) {
+    private async notify(state: TimerState) {
+        const ctx = this.createLogContext(state)
+        const logFile = await this.logger.resolveLogFile(ctx)
         const emoji = state.mode == 'WORK' ? '🍅' : '🥤'
         const text = `${emoji} You have been ${
             state.mode === 'WORK' ? 'working' : 'breaking'

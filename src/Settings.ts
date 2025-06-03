@@ -18,6 +18,7 @@ export interface Settings {
     workLen: number
     breakLen: number
     autostart: boolean
+    continueAfterZero: boolean
     useStatusBarTimer: boolean
     notificationSound: boolean
     enableTaskTracking: boolean
@@ -39,6 +40,7 @@ export default class PomodoroSettings extends PluginSettingTab {
         workLen: 25,
         breakLen: 5,
         autostart: false,
+        continueAfterZero: false,
         useStatusBarTimer: false,
         notificationSound: true,
         customSound: '',

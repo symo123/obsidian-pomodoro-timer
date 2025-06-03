@@ -59,7 +59,7 @@ export default class Logger {
         return logFile
     }
 
-    private async resolveLogFile(ctx: LogContext): Promise<TFile | void> {
+    public async resolveLogFile(ctx: LogContext): Promise<TFile | void> {
         const settings = this.plugin!.getSettings()
 
         // filter log level
@@ -123,7 +123,7 @@ export default class Logger {
             end: new Date().getTime(),
             session: ctx.duration,
             task: ctx.task,
-            finished: ctx.count == ctx.elapsed,
+            finished: ctx.count <= ctx.elapsed,
         }
     }
 

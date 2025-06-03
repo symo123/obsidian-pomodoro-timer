@@ -32,6 +32,11 @@ const pause = () => {
     }
 }
 
+const skip = () => {
+    timer.reset()
+    timer.toggleMode()
+}
+
 const toggleTimer = () => {
     timer.toggleTimer()
 }
@@ -179,6 +184,29 @@ const toggleExtra = (value: 'settings' | 'tasks') => {
                     ><path
                         d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
                     /><path d="M3 3v5h5" /></svg
+                >
+            </span>
+            <span on:click={skip} class="control">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-rotate-ccw"
+                    ><polygon
+                        points="19,12 5,21 5,3 "
+                        id="polygon1"
+                        transform="matrix(0.48966371,0,0,1.0321186,2.26259,-0.38542317)"
+                    /><polygon
+                        points="5,3 19,12 5,21 "
+                        id="polygon2"
+                        transform="matrix(0.48966371,0,0,1.0321186,10.83146,-0.38542317)"
+                    /></svg
                 >
             </span>
             <span

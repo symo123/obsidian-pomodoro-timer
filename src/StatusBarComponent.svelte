@@ -60,6 +60,17 @@ const ctxMenu = (e: MouseEvent) => {
     })
 
     menu.addItem((item) => {
+        item.setTitle('Continue After Zero')
+        item.setChecked($settings.continueAfterZero)
+        item.onClick(() => {
+            settings.update((s) => {
+                s.continueAfterZero = !s.continueAfterZero
+                return s
+            })
+        })
+    })
+
+    menu.addItem((item) => {
         item.setTitle('Sound')
         item.setChecked($settings.notificationSound)
         item.onClick(() => {
